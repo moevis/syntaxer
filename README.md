@@ -1,8 +1,8 @@
 # A new way to writer a parser for TypeScript [POC]
 
-This project is inspired from a go library ![participle](https://github.com/alecthomas/participle), which creates a parser from struct tag.
+This project is inspired from a go library [participle](https://github.com/alecthomas/participle), which creates a parser from struct tag.
 
-With the reflection provided by TypeScript, we can do it in the same way as participle's.
+With the reflection provided by TypeScript, we can do it in the same way as participle does.
 
 ## Annotation syntax example
 
