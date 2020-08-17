@@ -7,6 +7,9 @@ With the reflection provided by TypeScript, we can do it in the same way as part
 ## Annotation syntax example
 
 ```typescript
+import { SyntaxerBuilder, Syntax } from '../src/decorator';
+import { Parse } from '../src/api';
+
 @SyntaxerBuilder()
 class Expression {
   @Syntax('@Number')
@@ -17,21 +20,8 @@ class Expression {
   num2: number = 0;
 }
 
-const rule = Reflect.getMetadata('rule', Express.prototype) as RuleSet;
-
-rule
-  .Match(peeker)
-  .then((applyable) => {
-    const e = new Expression();
-    applyable(e);
-    console.log(e);
-  })
-  .catch((err) => {
-    console.log('err', err);
-  });
-
+Parse(Expression, `1 + 1`).then(console.log);
 ```
-
 
 ## How to run
 

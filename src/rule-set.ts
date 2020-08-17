@@ -154,7 +154,6 @@ export class RuleSet<T = any, E = any> {
   }
   private parseSeqAndBranch(start: number, terminators: RuleToken[] = []): IRuleContext {
     const ret = this.parseSequence(start, terminators);
-    console.log('index', start, 'get', ret);
     if (!ret.branch) {
       return ret;
     }
@@ -162,6 +161,7 @@ export class RuleSet<T = any, E = any> {
     console.log('got a Branch', branch);
     return this.parseBranch(branch, ret.index, terminators);
   }
+  // <expr> | <expr>
   private parseBranch(root: Branch, start: number, terminators: RuleToken[]): IRuleContext {
     while (true) {
       const ret = this.parseSequence(start, terminators);

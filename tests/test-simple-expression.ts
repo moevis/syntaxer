@@ -1,7 +1,5 @@
 import { SyntaxerBuilder, Syntax } from '../src/decorator';
-import { SimpleLexer } from '../src/lexer';
-import { TokenPeeker } from '../src/peek';
-import { RuleSet } from '../src/rule-set';
+import { Parse } from '../src/api';
 import 'reflect-metadata';
 
 @SyntaxerBuilder()
@@ -17,7 +15,7 @@ class Operator {
 }
 
 @SyntaxerBuilder()
-class Express {
+class Expression {
   @Syntax("(@'(')?")
   left: boolean = false;
   @Syntax('@Number')
@@ -33,21 +31,6 @@ class Express {
   right: boolean = false;
 }
 
-const lexer = new SimpleLexer(`
-( 1 + 2 )
-`);
-
-const peeker = new TokenPeeker(lexer);
-
-const rule = Reflect.getMetadata('rule', Express.prototype) as RuleSet;
-
-rule
-  .Match(peeker)
-  .then((applyable) => {
-    const e = new Express();
-    applyable(e);
-    console.log(e);
-  })
-  .catch((err) => {
-    console.log('err', err);
-  });
+Parse(Expression, ` ( 1 + 2 ) `)
+  .then((e) => console.log(e))
+  .catch((err) => console.log('err', err));

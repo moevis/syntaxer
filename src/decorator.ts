@@ -6,13 +6,11 @@ export function SyntaxerBuilder(): ClassDecorator {
     if (rule_set) {
       rule_set.Build();
     }
-    // console.log('ruleset', rule_set);
   };
 }
 
 export function Syntax(rule: string, item_type?: (_: any) => new () => any): PropertyDecorator {
   return (target, key) => {
-    // console.log(target);
     const ctor = Reflect.getMetadata('design:type', target, key);
     if (!ctor) {
       throw Error('should add SyntaxerBuilder decorator to:' + target);
