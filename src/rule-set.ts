@@ -21,7 +21,6 @@ export class RuleSet<T = any, E = any> {
     this.ready = false;
   }
   AddRule(raw_rule: string, key_field: keyof T, ctor: new () => T, item_type?: new () => E) {
-    console.log('key', key_field, 'adding rule', raw_rule, 'itemtype', item_type);
     this.rules.push(new Rule(raw_rule, key_field as string, ctor, item_type));
   }
   Match(lexer: TokenPeeker) {
@@ -76,7 +75,6 @@ export class RuleSet<T = any, E = any> {
     }
     // if terminators has been set but not found, should panic.
     if (terminators.length > 0) {
-      console.log(terminators);
       throw Error('looking for token: ' + terminators);
     }
     return { branch: false, index: this.tokens.length, node: root };
@@ -91,7 +89,6 @@ export class RuleSet<T = any, E = any> {
       return { branch: false, index: index + 1, node: group };
     } else {
       const group = new Group(node, RuleRange.Once);
-      console.log(group);
       return { branch: false, index: index, node: group };
     }
   }
@@ -113,7 +110,7 @@ export class RuleSet<T = any, E = any> {
       }
     } else if (t.type === RuleTokenType.String) {
       return {
-        node: new CaptureText(String, t.text, t.key),
+        node: new CaptureText(t.ctor || String, t.text, t.key),
         index: start + 1,
         branch: false,
       };
@@ -158,7 +155,6 @@ export class RuleSet<T = any, E = any> {
       return ret;
     }
     const branch = new Branch(ret.node);
-    console.log('got a Branch', branch);
     return this.parseBranch(branch, ret.index, terminators);
   }
   // <expr> | <expr>

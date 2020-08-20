@@ -12,7 +12,6 @@ export class TokenPeeker {
       const t = lexer.Next();
       this.tokens.push(t);
       if (t.IsEOF()) {
-        console.log(this.tokens);
         return;
       }
     }

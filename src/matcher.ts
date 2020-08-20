@@ -2,6 +2,7 @@ import { TokenPeeker } from './peek';
 import { Token, TokenType, Position } from './lexer';
 import { RuleRange, Rule, RuleToken } from './rule';
 import { RuleSet } from './rule-set';
+import 'reflect-metadata';
 
 export interface INode {
   Match(ctx: TokenPeeker): Promise<Applyable>;
@@ -43,9 +44,7 @@ export class Branch implements INode {
   Match(ctx: TokenPeeker): Promise<Applyable> {
     return new Promise(async (res, rej) => {
       const state = ctx.Save();
-      let index = 0;
       for (const b of this.branches) {
-        console.log('trying branch', index++, b, 'cur token', ctx.Peek());
         try {
           const applyer = await b.Match(ctx);
           res(applyer);
@@ -100,7 +99,6 @@ export class CaptureText implements INode {
         }
         ctx.Next();
         // const value = new this.creator(token.text);
-        console.log('matched text', token.text);
         res((obj: Object) => {
           if (obj.hasOwnProperty(this.field)) {
             (obj as any)[this.field] = value;
@@ -183,7 +181,6 @@ export class CaptureValue<T> implements INode {
           return;
         }
         const value = new this.creator(token.text);
-        console.log('capture value', value);
         ctx.Next();
         res((obj: Object) => {
           if (obj.hasOwnProperty(this.field)) {
@@ -324,13 +321,11 @@ export class Group implements INode {
       }
 
       for (let i = 0; i <= max_times; i++) {
-        console.log('group loop', i);
         try {
           state = ctx.Save();
           const applyers = await this.node.Match(ctx);
           applables.push(applyers);
         } catch (error) {
-          console.log(`[${min_times},${max_times}] => ${i + 1}`);
           ctx.Restore(state);
           if (i >= min_times && i <= max_times) {
             res((obj) => applables.forEach((v) => v(obj)));

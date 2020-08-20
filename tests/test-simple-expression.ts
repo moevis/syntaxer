@@ -22,7 +22,7 @@ class Expression {
   num1: number = 0;
   // @Syntax("@( '+' | '-' | '*' | '/' )")
   // op: string = '';
-  @Syntax('(@@)*', (type) => Operator)
+  @Syntax('(@@)', (type) => Operator)
   // @Syntax('@@')
   op?: Operator[];
   @Syntax('@Number')
