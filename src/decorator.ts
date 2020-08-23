@@ -1,6 +1,7 @@
+import { ILexer } from './lexer';
 import { RuleSet } from './rule-set';
 
-export function SyntaxerBuilder(): ClassDecorator {
+export function SyntaxerBuilder(lexer?: new (opt?: any) => ILexer, lexer_opt?: any): ClassDecorator {
   return (target: any) => {
     const rule_set: RuleSet = Reflect.getMetadata('rule', target.prototype) || new RuleSet();
     if (rule_set) {

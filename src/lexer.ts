@@ -3,8 +3,26 @@ import { TokenPeeker } from './peek';
 export interface ILexer {
   operators: Set<string>;
   keywords: Set<string>;
+  token_type_mapping: Map<string, TokenType>;
   Next(): Token;
+  SetSource(source: string): void;
 }
+
+export enum TokenType {
+  EOF,
+  IDENT,
+  COMMENT,
+  STRING,
+  NUMBER,
+  KEYWORD,
+  WHITE,
+  OPERATOR,
+}
+
+const default_token_type_mapping = new Map<string, TokenType>([
+  ['String', TokenType.STRING],
+  ['Number', TokenType.NUMBER],
+]);
 
 interface IRegexRule {
   regex: RegExp;
@@ -57,7 +75,7 @@ const default_operator = new Set<string>([
   '=',
 ]);
 
-const default_keyowrd = new Set([
+const default_keyword = new Set([
   'if',
   'function',
   'const',
@@ -96,22 +114,28 @@ const default_keyowrd = new Set([
 interface ISimpleLexerOption {
   operator_set?: Set<string>;
   keywords?: Set<string>;
+  token_type_mapping?: Map<string, TokenType>;
 }
 
 export class SimpleLexer implements ILexer {
-  private source: string;
-  private index: number;
-  private length: number;
-  private line: number;
-  private column: number;
+  private source: string = '';
+  private index: number = 0;
+  private length: number = 0;
+  private line: number = 0;
+  private column: number = 0;
   readonly keywords: Set<string>;
   readonly operators: Set<string>;
-  constructor(source: string, opt?: ISimpleLexerOption) {
+  readonly token_type_mapping: Map<string, TokenType>;
+  constructor(opt?: ISimpleLexerOption) {
+    this.keywords = (opt && opt.keywords) || default_keyword;
+    this.operators = (opt && opt.operator_set) || default_operator;
+    this.token_type_mapping = (opt && opt.token_type_mapping) || default_token_type_mapping;
+  }
+  SetSource(source: string) {
+    console.log('parsing source', source);
     if (source[source.length - 1] !== '\n') {
       source += '\n';
     }
-    this.keywords = (opt && opt.keywords) || default_keyowrd;
-    this.operators = (opt && opt.operator_set) || default_operator;
     this.source = source;
     this.index = 0;
     this.length = source.length;
@@ -210,8 +234,14 @@ export class SimpleLexer implements ILexer {
         return t;
       }
       if (isNumber(c)) {
-        const literal = this.ParseUntilNotSatisfy(i, isNumber);
-        const t = new Token(TokenType.FLOAT, new Position(this.line, this.column, this.index), literal);
+        let literal = this.ParseUntilNotSatisfy(i, isNumber);
+        const curr_index = i + literal.length;
+        const has_dot = curr_index < this.length ? this.source[curr_index] === '.' : false;
+        if (has_dot) {
+          const demical = this.ParseUntilNotSatisfy(curr_index + 1, isNumber);
+          literal = literal + '.' + demical;
+        }
+        const t = new Token(TokenType.NUMBER, new Position(this.line, this.column, this.index), literal);
         this.column += literal.length;
         this.index = i + literal.length;
         return t;
@@ -247,26 +277,15 @@ export class SimpleLexer implements ILexer {
   }
 }
 
-class RegexLexer implements ILexer {
-  rules: IRegexRule[] = [];
-  constructor() {}
-  operators: Set<string> = new Set();
-  keywords: Set<string> = new Set();
-  Next(): Token {
-    throw new Error('Method not implemented.');
-  }
-}
-
-export enum TokenType {
-  EOF,
-  IDENT,
-  COMMENT,
-  STRING,
-  FLOAT,
-  KEYWORD,
-  WHITE,
-  OPERATOR,
-}
+// class RegexLexer implements ILexer {
+//   rules: IRegexRule[] = [];
+//   constructor() {}
+//   operators: Set<string> = new Set();
+//   keywords: Set<string> = new Set();
+//   Next(): Token {
+//     throw new Error('Method not implemented.');
+//   }
+// }
 
 export class Position {
   line: number;

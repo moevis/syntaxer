@@ -31,6 +31,6 @@ class Expression {
   right: boolean = false;
 }
 
-Parse(Expression, ` ( 1 + 2 ) `)
+Parse(Expression, ` ( 1.1 + 2 ) `)
   .then((e) => console.log(e))
   .catch((err) => console.log('err', err));

@@ -1,6 +1,6 @@
-import { INode, EmptyNode, Sequence, LITERAL, Branch, Group, CaptureValue, CaptureText, Expander } from './matcher';
+import { INode, EmptyNode, Sequence, LITERAL, Branch, Group, CaptureType, CaptureText, Expander } from './matcher';
 import { Rule, RuleToken, RuleTokenType, RuleRange } from './rule';
-import { TokenType } from './lexer';
+import { ILexer, SimpleLexer, TokenType } from './lexer';
 import { TokenPeeker } from './peek';
 
 interface IRuleContext {
@@ -14,21 +14,42 @@ export class RuleSet<T = any, E = any> {
   private tokens: RuleToken[];
   private node: INode;
   private ready: boolean;
-  constructor() {
+  private token_type_mapping: Map<string, TokenType>;
+  private lexer: ILexer;
+
+  constructor(lexer_ctor?: new (opt?: any) => ILexer, lexer_opt?: any) {
     this.rules = [];
     this.tokens = [];
     this.node = new Sequence();
     this.ready = false;
+    if (lexer_ctor) {
+      this.lexer = new lexer_ctor(lexer_ctor);
+    } else {
+      this.lexer = new SimpleLexer();
+    }
+    this.token_type_mapping = this.lexer.token_type_mapping;
   }
   AddRule(raw_rule: string, key_field: keyof T, ctor: new () => T, item_type?: new () => E) {
     this.rules.push(new Rule(raw_rule, key_field as string, ctor, item_type));
   }
-  Match(lexer: TokenPeeker) {
+
+  MatchSource(source: string) {
+    this.lexer.SetSource(source);
+    const peeker = new TokenPeeker(this.lexer);
     if (!this.ready) {
+      this.token_type_mapping = this.lexer.token_type_mapping;
       this.Build();
       this.ready = true;
     }
-    return this.node.Match(lexer);
+    return this.node.Match(peeker);
+  }
+  MatchNode(peeker: TokenPeeker) {
+    if (!this.ready) {
+      this.token_type_mapping = peeker.token_type_mapping;
+      this.Build();
+      this.ready = true;
+    }
+    return this.node.Match(peeker);
   }
   Build() {
     const tokens: RuleToken[] = [];
@@ -100,13 +121,16 @@ export class RuleSet<T = any, E = any> {
     if (t.IsEqual(RuleToken.LeftBracket)) {
       return this.parseGroup(start + 1, [RuleToken.RightBracket]);
     } else if (t.type === RuleTokenType.Ident) {
-      if (t.text === 'String') {
-        return { node: new CaptureValue(t.ctor!, TokenType.STRING, t.key), index: start + 1, branch: false };
-      } else if (t.text === 'Number') {
-        return { node: new CaptureValue(t.ctor!, TokenType.FLOAT, t.key), index: start + 1, branch: false };
+      if (this.token_type_mapping.has(t.text)) {
+        return {
+          node: new CaptureType(t.ctor!, this.token_type_mapping.get(t.text)!, t.key),
+          index: start + 1,
+          branch: false,
+        };
       } else {
         // TODO: capure other type
-        throw Error('not support for capture token: ' + t.text);
+        console.log(this.token_type_mapping);
+        throw Error('not support for capture token type: ' + t.text);
       }
     } else if (t.type === RuleTokenType.String) {
       return {

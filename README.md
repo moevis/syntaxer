@@ -7,6 +7,7 @@ With the reflection library provided by TypeScript, we can do it in the same way
 ## Annotation syntax example
 
 ```typescript
+import 'reflect-metadata';
 import { SyntaxerBuilder, Syntax } from '../src/decorator';
 import { Parse } from '../src/api';
 

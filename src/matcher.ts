@@ -12,7 +12,7 @@ export interface INode {
 type Applyable = (obj: Object) => void;
 
 export class NotMatch extends Error {
-  constructor(public level: number, public pos?: Position, expecting?: string) {
+  constructor(public level: number, public pos?: Position, msg?: string) {
     super('branch not matched');
   }
 }
@@ -158,7 +158,7 @@ export class Capture<T = any> implements INode {
   }
 }
 
-export class CaptureValue<T> implements INode {
+export class CaptureType<T> implements INode {
   field: string;
   creator: new (s: string) => any;
   token_type: TokenType;
@@ -272,7 +272,7 @@ export class Expander implements INode {
       const state = ctx.Save();
       const rule = Reflect.getMetadata('rule', this.item_type.prototype) as RuleSet;
       try {
-        const applyer = await rule.Match(ctx);
+        const applyer = await rule.MatchNode(ctx);
         const item = new this.item_type();
         applyer(item);
         if (this.is_array) {
@@ -327,6 +327,11 @@ export class Group implements INode {
           applables.push(applyers);
         } catch (error) {
           ctx.Restore(state);
+          if (i < min_times) {
+            rej(
+              new NotMatch(state, ctx.Peek(0)!.pos, `must match at least ${min_times} time, but matched ${i} time(s)`)
+            );
+          }
           if (i >= min_times && i <= max_times) {
             res((obj) => applables.forEach((v) => v(obj)));
           } else {
