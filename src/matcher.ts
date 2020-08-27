@@ -1,5 +1,5 @@
 import { TokenPeeker } from './peek';
-import { Token, TokenType, Position } from './lexer';
+import { Token, TokenType, Position } from './lexer/lexer';
 import { RuleRange, Rule, RuleToken } from './rule';
 import { RuleSet } from './rule-set';
 import 'reflect-metadata';
@@ -13,7 +13,7 @@ type Applyable = (obj: Object) => void;
 
 export class NotMatch extends Error {
   constructor(public level: number, public pos?: Position, msg?: string) {
-    super('branch not matched');
+    super('branch not matched: ' + msg);
   }
 }
 
@@ -270,6 +270,7 @@ export class Expander implements INode {
   Match(ctx: TokenPeeker): Promise<Applyable> {
     return new Promise(async (res, rej) => {
       const state = ctx.Save();
+      console.log('getting rule for', this.item_type.name);
       const rule = Reflect.getMetadata('rule', this.item_type.prototype) as RuleSet;
       try {
         const applyer = await rule.MatchNode(ctx);
@@ -287,7 +288,9 @@ export class Expander implements INode {
           res((obj) => ((obj as any)[this.field] = item));
         }
       } catch (error) {
-        ctx.Restore(state);
+        if (error instanceof NotMatch) {
+          ctx.Restore(state);
+        }
         rej(error);
       }
     });
@@ -313,10 +316,17 @@ export class Group implements INode {
       let state = ctx.Save();
       let min_times = 0;
       let max_times = 0;
-      if (this.range === RuleRange.Once || this.range === RuleRange.Optional) {
+      if (this.range === RuleRange.Once) {
         max_times = 1;
-      } else if (this.range === RuleRange.OnceOrMore || this.range === RuleRange.OptionalOrMore) {
         min_times = 1;
+      } else if (this.range === RuleRange.Optional) {
+        max_times = 1;
+        min_times = 0;
+      } else if (this.range === RuleRange.OnceOrMore) {
+        min_times = 1;
+        max_times = Number.MAX_SAFE_INTEGER;
+      } else if (this.range === RuleRange.OptionalOrMore) {
+        min_times = 0;
         max_times = Number.MAX_SAFE_INTEGER;
       }
 
@@ -329,10 +339,16 @@ export class Group implements INode {
           ctx.Restore(state);
           if (i < min_times) {
             rej(
-              new NotMatch(state, ctx.Peek(0)!.pos, `must match at least ${min_times} time, but matched ${i} time(s)`)
+              new NotMatch(
+                state,
+                ctx.Peek(0)!.pos,
+                `must match at least ${min_times} time, but matched ${i} time(s), err ${error}`
+              )
             );
+            return;
           }
           if (i >= min_times && i <= max_times) {
+            console.log('branch stop', error);
             res((obj) => applables.forEach((v) => v(obj)));
           } else {
             rej(error);
@@ -365,11 +381,7 @@ export class LITERAL<T extends Object> implements INode {
       }
       if (t.text === this.text) {
         ctx.Next();
-        res((obj) => {
-          if (obj.hasOwnProperty(this.field)) {
-            (obj as any)[this.field] = true;
-          }
-        });
+        res(Ident);
         return;
       }
       ctx.Restore(state);

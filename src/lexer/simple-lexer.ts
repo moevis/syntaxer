@@ -1,121 +1,19 @@
-import { TokenPeeker } from './peek';
-
-export interface ILexer {
-  operators: Set<string>;
-  keywords: Set<string>;
-  token_type_mapping: Map<string, TokenType>;
-  Next(): Token;
-  SetSource(source: string): void;
-}
-
-export enum TokenType {
-  EOF,
-  IDENT,
-  COMMENT,
-  STRING,
-  NUMBER,
-  KEYWORD,
-  WHITE,
-  OPERATOR,
-}
-
-const default_token_type_mapping = new Map<string, TokenType>([
-  ['String', TokenType.STRING],
-  ['Number', TokenType.NUMBER],
-]);
-
-interface IRegexRule {
-  regex: RegExp;
-  type: TokenType;
-}
-
-function isNumber(c: string) {
-  return c >= '0' && c <= '9';
-}
-
-function isAlpha(c: string) {
-  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-}
-
-function isNewLine(c: string) {
-  return c === '\n' || c === '\r';
-}
-
-function isAlphaNumber(c: string) {
-  return isNumber(c) || isAlpha(c);
-}
-
-function isQuote(c: string) {
-  return c === "'" || c === '"';
-}
-
-const default_operator = new Set<string>([
-  '+',
-  '-',
-  '*',
-  '.',
-  '\\',
-  ':',
-  '%',
-  '|',
-  '!',
-  '?',
-  '#',
-  '&',
-  ';',
-  ',',
-  '(',
-  ')',
-  '<',
-  '>',
-  '{',
-  '}',
-  '[',
-  ']',
-  '=',
-]);
-
-const default_keyword = new Set([
-  'if',
-  'function',
-  'const',
-  'for',
-  'switch',
-  'break',
-  'instanceof',
-  'with',
-  'yield',
-  'void',
-  'this',
-  'in',
-  'goto',
-  'import',
-  'default',
-  'debugger',
-  'continue',
-  'async',
-  'await',
-  'delete',
-  'let',
-  'else',
-  'while',
-  'class',
-  'export',
-  'private',
-  'public',
-  'var',
-  'new',
-  'return',
-  'try',
-  'catch',
-  'typeof',
-]);
-
-interface ISimpleLexerOption {
-  operator_set?: Set<string>;
-  keywords?: Set<string>;
-  token_type_mapping?: Map<string, TokenType>;
-}
+import { TokenPeeker } from '../peek';
+import {
+  ILexer,
+  TokenType,
+  ISimpleLexerOption,
+  default_keyword,
+  default_operator,
+  default_token_type_mapping,
+  isNewLine,
+  Token,
+  Position,
+  isNumber,
+  isAlpha,
+  isAlphaNumber,
+  isQuote,
+} from './lexer';
 
 export class SimpleLexer implements ILexer {
   private source: string = '';
@@ -274,48 +172,5 @@ export class SimpleLexer implements ILexer {
       }
     }
     return new Token(TokenType.EOF, new Position(this.line, this.column, this.index));
-  }
-}
-
-// class RegexLexer implements ILexer {
-//   rules: IRegexRule[] = [];
-//   constructor() {}
-//   operators: Set<string> = new Set();
-//   keywords: Set<string> = new Set();
-//   Next(): Token {
-//     throw new Error('Method not implemented.');
-//   }
-// }
-
-export class Position {
-  line: number;
-  column: number;
-  index: number;
-  constructor(line: number, column: number, index: number) {
-    this.line = line;
-    this.column = column;
-    this.index = index;
-  }
-}
-
-export class Token {
-  pos: Position;
-  text: string = '';
-  type: TokenType;
-  constructor(type: TokenType, pos: Position, text?: string) {
-    this.type = type;
-    this.pos = pos;
-    if (text) {
-      this.text = text;
-    }
-  }
-  IsEOF() {
-    return this.type === TokenType.EOF;
-  }
-  IsEqual(token: Token): boolean {
-    return this.type === token.type && this.text === token.text;
-  }
-  public static Create(text: string, type: TokenType): Token {
-    return new Token(type, new Position(0, 0, 0), text);
   }
 }

@@ -1,12 +1,13 @@
-import { ILexer } from './lexer';
+import { ILexer } from './lexer/lexer';
 import { RuleSet } from './rule-set';
 
-export function SyntaxerBuilder(lexer?: new (opt?: any) => ILexer, lexer_opt?: any): ClassDecorator {
+export function SyntaxerBuilder(lexer?: ILexer): ClassDecorator {
   return (target: any) => {
     const rule_set: RuleSet = Reflect.getMetadata('rule', target.prototype) || new RuleSet();
-    if (rule_set) {
-      rule_set.Build();
+    if (lexer) {
+      rule_set.SetLexer(lexer);
     }
+    rule_set.Build();
   };
 }
 
@@ -15,8 +16,6 @@ export function Syntax(rule: string, item_type?: (_: any) => new () => any): Pro
     const ctor = Reflect.getMetadata('design:type', target, key);
     if (!ctor) {
       throw Error('should add SyntaxerBuilder decorator to:' + target);
-    }
-    if (ctor === Array) {
     }
 
     const rule_set: RuleSet = Reflect.getMetadata('rule', target) || new RuleSet();

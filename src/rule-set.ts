@@ -1,6 +1,7 @@
 import { INode, EmptyNode, Sequence, LITERAL, Branch, Group, CaptureType, CaptureText, Expander } from './matcher';
 import { Rule, RuleToken, RuleTokenType, RuleRange } from './rule';
-import { ILexer, SimpleLexer, TokenType } from './lexer';
+import { ILexer, TokenType } from './lexer/lexer';
+import { SimpleLexer } from './lexer/simple-lexer';
 import { TokenPeeker } from './peek';
 
 interface IRuleContext {
@@ -15,18 +16,13 @@ export class RuleSet<T = any, E = any> {
   private node: INode;
   private ready: boolean;
   private token_type_mapping: Map<string, TokenType>;
-  private lexer: ILexer;
+  private lexer: ILexer = new SimpleLexer();
 
-  constructor(lexer_ctor?: new (opt?: any) => ILexer, lexer_opt?: any) {
+  constructor() {
     this.rules = [];
     this.tokens = [];
     this.node = new Sequence();
     this.ready = false;
-    if (lexer_ctor) {
-      this.lexer = new lexer_ctor(lexer_ctor);
-    } else {
-      this.lexer = new SimpleLexer();
-    }
     this.token_type_mapping = this.lexer.token_type_mapping;
   }
   AddRule(raw_rule: string, key_field: keyof T, ctor: new () => T, item_type?: new () => E) {
@@ -51,6 +47,9 @@ export class RuleSet<T = any, E = any> {
     }
     return this.node.Match(peeker);
   }
+  SetLexer(lexer: ILexer) {
+    this.lexer = lexer;
+  }
   Build() {
     const tokens: RuleToken[] = [];
     for (const rule of this.rules) {
@@ -58,6 +57,9 @@ export class RuleSet<T = any, E = any> {
     }
     this.tokens = tokens;
     this.node = this.parseNode();
+  }
+  toJSON() {
+    return this.node;
   }
   private parseNode(): INode {
     if (this.tokens.length === 0) {
