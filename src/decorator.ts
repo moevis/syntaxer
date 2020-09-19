@@ -20,7 +20,7 @@ export function Syntax(rule: string, item_type?: (_: any) => new () => any): Pro
 
     const rule_set: RuleSet = Reflect.getMetadata('rule', target) || new RuleSet();
     if (item_type) {
-      rule_set.AddRule(rule, key.toString(), ctor, item_type(0));
+      rule_set.AddRule(rule, key.toString(), ctor, item_type);
     } else {
       rule_set.AddRule(rule, key.toString(), ctor);
     }

@@ -4,6 +4,22 @@ export interface ILexer {
   SetSource(source: string): void;
 }
 
+export class BasicLexer {
+  index: number = 0;
+  source: string = '';
+  line: number = 0;
+  column: number = 0;
+  length: number = 0;
+
+  SetSource(source: string): void {
+    this.source = source;
+    this.length = source.length;
+    this.line = 0;
+    this.column = 0;
+    this.index = 0;
+  }
+}
+
 export enum TokenType {
   EOF,
   IDENT,

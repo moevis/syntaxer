@@ -17,7 +17,7 @@ class KeyValue {
   @Syntax('@String "="')
   key: string = '';
   @Syntax('(@Number | @String)')
-  Value: string | number = '';
+  value: string | number = '';
 }
 
 @SyntaxerBuilder(lexer)

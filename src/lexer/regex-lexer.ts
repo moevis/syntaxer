@@ -1,4 +1,4 @@
-import { ILexer, Position, Token, TokenType } from './lexer';
+import { BasicLexer, ILexer, Position, Token, TokenType } from './lexer';
 
 interface IRule {
   name: string;
@@ -19,16 +19,13 @@ export interface IRegexLexerOption {
   omit?: string[];
 }
 
-export class RegexLexer implements ILexer {
+export class RegexLexer extends BasicLexer implements ILexer {
   token_type_mapping: Map<string, TokenType> = new Map();
   rules: IRule[] = [];
   source: string = '';
-  index: number = 0;
-  length: number = 0;
-  line: number = 0;
-  column: number = 0;
   omit: Set<string>;
   constructor(option?: IRegexLexerOption) {
+    super();
     this.omit = new Set((option && option.omit) || []);
   }
   AddRule(name: string, re: RegExp, token_type?: TokenType) {
@@ -69,12 +66,5 @@ export class RegexLexer implements ILexer {
       throw Error('no match at:' + new Position(this.line, this.column, this.index));
     }
     return new Token(TokenType.EOF, new Position(this.line, this.column, this.index));
-  }
-  SetSource(source: string): void {
-    this.source = source;
-    this.index = 0;
-    this.line = 0;
-    this.column = 0;
-    this.length = source.length;
   }
 }

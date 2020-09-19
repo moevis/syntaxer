@@ -74,7 +74,7 @@ class KeyValue {
   @Syntax('@String "="')
   key: string = '';
   @Syntax('@(@String | @Number)')
-  Value: any;
+  value: any;
 }
 
 @SyntaxerBuilder(lexer)
@@ -115,8 +115,8 @@ Output is:
     {
       "title": "yoyo",
       "key_values": [
-        { "key": "input", "Value": "out" },
-        { "key": "hello", "Value": "2333" }
+        { "key": "input", "value": "out" },
+        { "key": "hello", "value": "2333" }
       ]
     }
   ]

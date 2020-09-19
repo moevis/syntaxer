@@ -25,7 +25,7 @@ export class RuleSet<T = any, E = any> {
     this.ready = false;
     this.token_type_mapping = this.lexer.token_type_mapping;
   }
-  AddRule(raw_rule: string, key_field: keyof T, ctor: new () => T, item_type?: new () => E) {
+  AddRule(raw_rule: string, key_field: keyof T, ctor: new () => T, item_type?: (_: any) => new () => E) {
     this.rules.push(new Rule(raw_rule, key_field as string, ctor, item_type));
   }
 

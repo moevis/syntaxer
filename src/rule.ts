@@ -59,18 +59,22 @@ export class Rule {
   raw_rule: string;
   key_field: string;
   ctor?: new () => void;
-  item_type?: new () => void;
-  constructor(raw_rule: string, key_field: string, ctor?: new () => any, item_type?: new () => any) {
+  item_type_func?: (_: any) => new () => any;
+  item_type?: new () => any;
+  constructor(raw_rule: string, key_field: string, ctor?: new () => any, item_type_func?: (_: any) => new () => any) {
     this.raw_rule = raw_rule;
     this.key_field = key_field;
     this.ctor = ctor;
     // when this.ctor is Array, this.item_type should be the element type.
-    this.item_type = item_type;
+    this.item_type_func = item_type_func;
   }
   createToken(text: string, type: RuleTokenType, index: number): RuleToken {
     return new RuleToken(text, type, index, this.key_field, this.raw_rule, this.ctor, this.item_type);
   }
   Parse(): RuleToken[] {
+    if (this.item_type_func) {
+      this.item_type = this.item_type_func(0);
+    }
     const ret: RuleToken[] = [];
     let index = 0;
     while (index < this.raw_rule.length) {
@@ -92,7 +96,7 @@ export class Rule {
         ret.push(this.createToken(c + literal, RuleTokenType.Ident, index));
         index += literal.length;
       } else {
-        throw Error(`invalid character ${c} in rule`);
+        throw Error(`invalid character ${c} in rule of field ${this.key_field}, ${this.raw_rule}`);
       }
       index++;
     }

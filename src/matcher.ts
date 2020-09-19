@@ -17,6 +17,8 @@ export class NotMatch extends Error {
   }
 }
 
+export class SyntaxAnnotationErr extends Error {}
+
 export class EmptyNode implements INode {
   Simplify(): INode {
     return this;
@@ -100,9 +102,9 @@ export class CaptureText implements INode {
         ctx.Next();
         // const value = new this.creator(token.text);
         res((obj: Object) => {
-          if (obj.hasOwnProperty(this.field)) {
-            (obj as any)[this.field] = value;
-          }
+          // if (obj.hasOwnProperty(this.field)) {
+          (obj as any)[this.field] = value;
+          // }
         });
       } catch (error) {
         rej(error);
@@ -146,9 +148,9 @@ export class Capture<T = any> implements INode {
         }
         ctx.Next();
         res((obj: Object) => {
-          if (obj.hasOwnProperty(this.field)) {
-            (obj as any)[this.field] = value;
-          }
+          // if (obj.hasOwnProperty(this.field)) {
+          (obj as any)[this.field] = value;
+          // }
         });
       } catch (error) {
         rej(error);
@@ -183,9 +185,9 @@ export class CaptureType<T> implements INode {
         const value = new this.creator(token.text);
         ctx.Next();
         res((obj: Object) => {
-          if (obj.hasOwnProperty(this.field)) {
-            (obj as any)[this.field] = value;
-          }
+          // if (obj.hasOwnProperty(this.field)) {
+          (obj as any)[this.field] = value;
+          // }
         });
       } catch (error) {
         rej(error);
@@ -252,6 +254,44 @@ export class Optional implements INode {
         res(Ident);
       }
     });
+  }
+}
+
+export class CharGroup implements INode {
+  char_set: Set<string>;
+  range_list: Array<[string, string]>;
+  constructor(char_set: Set<string>, range_list: Array<[string, string]>) {
+    this.char_set = char_set;
+    this.range_list = range_list;
+  }
+  CheckChar(text: string): boolean {
+    for (const c of text) {
+      if (this.char_set.has(c)) continue;
+      let in_range = false;
+      for (const [lower, upper] of this.range_list) {
+        if (c >= lower && c <= upper) {
+          in_range = true;
+          break;
+        }
+      }
+      if (in_range) continue;
+      return false;
+    }
+    return true;
+  }
+  Match(ctx: TokenPeeker): Promise<Applyable> {
+    return new Promise(async (res, rej) => {
+      const state = ctx.Save();
+      const token = ctx.Next();
+      if (token && TokenType.IDENT === token.type) {
+      } else {
+        rej(new NotMatch(state, token ? token.pos : undefined, token ? token.text : undefined));
+        ctx.Restore(state);
+      }
+    });
+  }
+  Simplify(): INode {
+    return this;
   }
 }
 
@@ -348,7 +388,7 @@ export class Group implements INode {
             return;
           }
           if (i >= min_times && i <= max_times) {
-            console.log('branch stop', error);
+            // console.log('branch stop', error);
             res((obj) => applables.forEach((v) => v(obj)));
           } else {
             rej(error);
